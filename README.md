@@ -84,7 +84,7 @@ https://kevinjoelc.github.io/AIAG01-Phantom-Stock-Management
 Backend API:
 https://aiag01-phantom-stock-management.onrender.com
 
-Demo Video:
+Demo Video:https://drive.google.com/file/d/15vZL1vM84fCwyXHH0gkNGCk8oZ2zfTHh/view?usp=sharing
 
 
 

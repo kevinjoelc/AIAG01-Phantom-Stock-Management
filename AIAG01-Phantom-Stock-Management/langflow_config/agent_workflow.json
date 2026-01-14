@@ -1,0 +1,103 @@
+{
+  "name": "AIAG01 Phantom Stock Management",
+  "description": "Agentic AI workflow for multi-tier manufacturing phantom stock detection",
+  "nodes": [
+    {
+      "id": "data_source",
+      "type": "API",
+      "name": "Supplier Data Source",
+      "config": {
+        "endpoint": "http://localhost:5000/api/inventory/reported",
+        "method": "GET"
+      },
+      "position": {"x": 100, "y": 100}
+    },
+    {
+      "id": "monitoring_agent",
+      "type": "Agent",
+      "name": "Supply Monitoring Agent",
+      "config": {
+        "role": "Data Collector and Normalizer",
+        "instructions": "Validate incoming inventory data, check for negative values, missing fields, and logistics anomalies. Flag data quality issues and escalate to supervisor if critical.",
+        "tools": ["data_validator", "anomaly_detector"]
+      },
+      "position": {"x": 300, "y": 100}
+    },
+    {
+      "id": "validation_agent",
+      "type": "Agent",
+      "name": "Validation Agent",
+      "config": {
+        "role": "Predictive Validator",
+        "instructions": "Calculate expected inventory based on production_rate - consumption_rate. Compare with reported inventory. Flag deviations > 20% and pass to risk analysis.",
+        "tools": ["inventory_predictor", "deviation_calculator"]
+      },
+      "position": {"x": 500, "y": 100}
+    },
+    {
+      "id": "risk_agent",
+      "type": "Agent",
+      "name": "Risk Analysis Agent",
+      "config": {
+        "role": "Phantom Stock Detector",
+        "instructions": "Calculate risk score using formula: (deviation * 50) + (tier * 6.67) + (history * 10). Classify as CRITICAL if score > 70, WARNING if > 40. Escalate high risks to supervisor.",
+        "tools": ["risk_calculator", "phantom_stock_detector"]
+      },
+      "position": {"x": 700, "y": 100}
+    },
+    {
+      "id": "supervisor_agent",
+      "type": "Agent",
+      "name": "Supervisor Agent",
+      "config": {
+        "role": "Decision Maker",
+        "instructions": "Review all agent outputs. Generate alerts for CRITICAL (immediate audit) and WARNING (increase monitoring). Create actionable recommendations with priority levels.",
+        "tools": ["alert_generator", "recommendation_engine"]
+      },
+      "position": {"x": 900, "y": 100}
+    },
+    {
+      "id": "output",
+      "type": "Output",
+      "name": "Dashboard Output",
+      "config": {
+        "format": "JSON",
+        "destination": "dashboard"
+      },
+      "position": {"x": 1100, "y": 100}
+    }
+  ],
+  "edges": [
+    {
+      "source": "data_source",
+      "target": "monitoring_agent",
+      "label": "Raw inventory data"
+    },
+    {
+      "source": "monitoring_agent",
+      "target": "validation_agent",
+      "label": "Validated data"
+    },
+    {
+      "source": "validation_agent",
+      "target": "risk_agent",
+      "label": "Deviation analysis"
+    },
+    {
+      "source": "risk_agent",
+      "target": "supervisor_agent",
+      "label": "Risk assessments"
+    },
+    {
+      "source": "supervisor_agent",
+      "target": "output",
+      "label": "Alerts & recommendations"
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "created_for": "AIAG01 Hackathon",
+    "agent_count": 4,
+    "architecture": "Multi-Agent Sequential Pipeline"
+  }
+}

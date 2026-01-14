@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIAG01 - Phantom Stock Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.8); }
+        }
+        @keyframes thinking {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        @keyframes flash {
+            0%, 100% { opacity: 1; background: rgba(153, 27, 27, 0.9); }
+            50% { opacity: 0.7; background: rgba(220, 38, 38, 1); }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .pulse-glow { animation: pulse-glow 2s infinite; }
+        .thinking { animation: thinking 1s infinite; }
+        .flash { animation: flash 1.5s infinite; }
+        .slide-up { animation: slideUp 0.5s ease-out; }
+        .float { animation: float 3s ease-in-out infinite; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .gradient-bg::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+        .glass {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .glass:hover {
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: translateY(-2px);
+            transition: all 0.3s;
+        }
+        .neon-text {
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.8),
+                         0 0 20px rgba(139, 92, 246, 0.6),
+                         0 0 30px rgba(139, 92, 246, 0.4);
+        }
+        .progress-bar {
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+            background-size: 200% 100%;
+            animation: shimmer 2s linear infinite;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            transition: all 0.3s;
+        }
+        .stat-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="gradient-bg p-6 shadow-2xl relative">
+        <div class="progress-bar absolute top-0 left-0 w-full"></div>
+        <div class="max-w-7xl mx-auto relative z-10">
+            <h1 class="text-5xl font-bold mb-2 neon-text float">🏭 AIAG01 Phantom Stock Detection</h1>
+            <p class="text-gray-200 text-lg">AI-Powered Multi-Tier Supply Chain Monitoring</p>
+            <div class="mt-4 flex gap-4 text-sm">
+                <div class="stat-card px-4 py-2 rounded-lg">
+                    <span class="text-gray-400">Status:</span>
+                    <span class="text-green-400 font-bold ml-2">● ONLINE</span>
+                </div>
+                <div class="stat-card px-4 py-2 rounded-lg">
+                    <span class="text-gray-400">Uptime:</span>
+                    <span class="text-purple-400 font-bold ml-2">99.9%</span>
+                </div>
+                <div class="stat-card px-4 py-2 rounded-lg">
+                    <span class="text-gray-400">Last Scan:</span>
+                    <span class="text-blue-400 font-bold ml-2" id="lastScan">Just now</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto p-6 space-y-6">
+        
+        <div class="glass rounded-xl p-6 slide-up">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                <span class="text-3xl">🤖</span> Agent Pipeline Status
+                <span class="ml-auto text-sm font-normal text-gray-400">Real-time monitoring</span>
+            </h2>
+            <div class="grid grid-cols-4 gap-4">
+                <div id="agent1" class="bg-gradient-to-br from-purple-900/50 to-gray-800 p-6 rounded-xl text-center border border-purple-500/30 hover:border-purple-500 transition">
+                    <div class="text-4xl mb-3">👁️</div>
+                    <div class="font-bold text-lg">Monitoring Agent</div>
+                    <div class="text-xs text-gray-400 mt-2" id="agent1-status">Idle</div>
+                    <div class="mt-3 h-1 bg-gray-700 rounded-full overflow-hidden">
+                        <div id="agent1-progress" class="h-full bg-purple-500 w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
+                <div id="agent2" class="bg-gradient-to-br from-blue-900/50 to-gray-800 p-6 rounded-xl text-center border border-blue-500/30 hover:border-blue-500 transition">
+                    <div class="text-4xl mb-3">✅</div>
+                    <div class="font-bold text-lg">Validation Agent</div>
+                    <div class="text-xs text-gray-400 mt-2" id="agent2-status">Idle</div>
+                    <div class="mt-3 h-1 bg-gray-700 rounded-full overflow-hidden">
+                        <div id="agent2-progress" class="h-full bg-blue-500 w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
+                <div id="agent3" class="bg-gradient-to-br from-yellow-900/50 to-gray-800 p-6 rounded-xl text-center border border-yellow-500/30 hover:border-yellow-500 transition">
+                    <div class="text-4xl mb-3">⚠️</div>
+                    <div class="font-bold text-lg">Risk Agent</div>
+                    <div class="text-xs text-gray-400 mt-2" id="agent3-status">Idle</div>
+                    <div class="mt-3 h-1 bg-gray-700 rounded-full overflow-hidden">
+                        <div id="agent3-progress" class="h-full bg-yellow-500 w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
+                <div id="agent4" class="bg-gradient-to-br from-green-900/50 to-gray-800 p-6 rounded-xl text-center border border-green-500/30 hover:border-green-500 transition">
+                    <div class="text-4xl mb-3">🎯</div>
+                    <div class="font-bold text-lg">Supervisor Agent</div>
+                    <div class="text-xs text-gray-400 mt-2" id="agent4-status">Idle</div>
+                    <div class="mt-3 h-1 bg-gray-700 rounded-full overflow-hidden">
+                        <div id="agent4-progress" class="h-full bg-green-500 w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass rounded-xl p-6 slide-up">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                <span class="text-3xl">🎮</span> Simulation Controls
+            </h2>
+            <div class="grid grid-cols-4 gap-4">
+                <button onclick="runAnalysis()" class="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 px-6 py-4 rounded-xl font-bold transition transform hover:scale-105 shadow-lg hover:shadow-purple-500/50">
+                    <div class="text-2xl mb-1">🔄</div>
+                    Run Analysis
+                </button>
+                <button onclick="simulateBreakdown()" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 px-6 py-4 rounded-xl font-bold transition transform hover:scale-105 shadow-lg hover:shadow-red-500/50">
+                    <div class="text-2xl mb-1">💥</div>
+                    Simulate Breakdown
+                </button>
+                <button onclick="simulateDelay()" class="bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 px-6 py-4 rounded-xl font-bold transition transform hover:scale-105 shadow-lg hover:shadow-yellow-500/50">
+                    <div class="text-2xl mb-1">⏱️</div>
+                    Simulate Delay
+                </button>
+                <button onclick="resetData()" class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 px-6 py-4 rounded-xl font-bold transition transform hover:scale-105 shadow-lg hover:shadow-green-500/50">
+                    <div class="text-2xl mb-1">🔄</div>
+                    Reset Data
+                </button>
+            </div>
+        </div>
+
+        <div id="alertsContainer" class="hidden">
+            <div class="bg-red-900 border-2 border-red-500 rounded-xl p-6 flash">
+                <h2 class="text-2xl font-bold mb-2">🚨 CRITICAL ALERT</h2>
+                <div id="alertMessage" class="text-lg"></div>
+            </div>
+        </div>
+
+        <div class="glass rounded-xl p-6">
+            <h2 class="text-2xl font-bold mb-4">🧠 AI Insights</h2>
+            <div id="aiInsights" class="text-gray-300 space-y-2">
+                <p>Waiting for analysis...</p>
+            </div>
+        </div>
+
+        <div class="glass rounded-xl p-6">
+            <h2 class="text-2xl font-bold mb-4">📊 Supply Chain Overview</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-800">
+                        <tr>
+                            <th class="p-3">Supplier</th>
+                            <th class="p-3">Tier</th>
+                            <th class="p-3">Reported Stock</th>
+                            <th class="p-3">Predicted Stock</th>
+                            <th class="p-3">Deviation</th>
+                            <th class="p-3">Risk %</th>
+                            <th class="p-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="supplierTable" class="divide-y divide-gray-700">
+                        <tr><td colspan="7" class="p-4 text-center text-gray-400">Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-6">
+            <div class="glass rounded-xl p-6">
+                <h3 class="text-xl font-bold mb-4">📈 Risk Distribution</h3>
+                <canvas id="riskChart"></canvas>
+            </div>
+            <div class="glass rounded-xl p-6">
+                <h3 class="text-xl font-bold mb-4">🔥 Risk Heatmap</h3>
+                <canvas id="heatmapChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001/api';
+        let riskChart, heatmapChart;
+
+        function initCharts() {
+            const ctx1 = document.getElementById('riskChart').getContext('2d');
+            riskChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Risk Score',
+                        data: [],
+                        backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: 'white' } } },
+                    scales: {
+                        y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('heatmapChart').getContext('2d');
+            heatmapChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Tier 1', 'Tier 2', 'Tier 3'],
+                    datasets: [{
+                        label: 'Average Risk',
+                        data: [0, 0, 0],
+                        backgroundColor: ['#ef4444', '#f59e0b', '#10b981']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: 'white' } } },
+                    scales: {
+                        y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                    }
+                }
+            });
+        }
+
+        function animateAgent(agentId, status, message) {
+            const agent = document.getElementById(agentId);
+            const statusEl = document.getElementById(`${agentId}-status`);
+            const progressBar = document.getElementById(`${agentId}-progress`);
+            
+            if (status === 'thinking') {
+                agent.classList.add('thinking', 'pulse-glow');
+                statusEl.textContent = message;
+                statusEl.className = 'text-xs text-yellow-400 mt-2 font-bold';
+                progressBar.style.width = '50%';
+            } else if (status === 'complete') {
+                agent.classList.remove('thinking', 'pulse-glow');
+                statusEl.textContent = message;
+                statusEl.className = 'text-xs text-green-400 mt-2 font-bold';
+                progressBar.style.width = '100%';
+            } else {
+                agent.classList.remove('thinking', 'pulse-glow');
+                statusEl.textContent = message;
+                statusEl.className = 'text-xs text-gray-400 mt-2';
+                progressBar.style.width = '0%';
+            }
+        }
+
+        async function runAnalysis() {
+            try {
+                animateAgent('agent1', 'thinking', 'Monitoring...');
+                await sleep(500);
+                
+                const response = await fetch(`${API_BASE}/analysis/run`, { method: 'POST' });
+                const result = await response.json();
+                
+                animateAgent('agent1', 'complete', 'Validated');
+                animateAgent('agent2', 'thinking', 'Calculating...');
+                await sleep(500);
+                
+                animateAgent('agent2', 'complete', 'Computed');
+                animateAgent('agent3', 'thinking', 'Analyzing...');
+                await sleep(500);
+                
+                animateAgent('agent3', 'complete', 'Assessed');
+                animateAgent('agent4', 'thinking', 'Deciding...');
+                await sleep(500);
+                
+                animateAgent('agent4', 'complete', 'Completed');
+                
+                await loadDashboard();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to connect to backend. Make sure it is running on port 8001');
+            }
+        }
+
+        async function loadDashboard() {
+            try {
+                const [suppliers, riskScores, predictedStock, dashboard] = await Promise.all([
+                    fetch(`${API_BASE}/suppliers`).then(r => r.json()),
+                    fetch(`${API_BASE}/risk-scores`).then(r => r.json()),
+                    fetch(`${API_BASE}/predicted-stock`).then(r => r.json()),
+                    fetch(`${API_BASE}/dashboard`).then(r => r.json())
+                ]);
+
+                updateTable(suppliers, riskScores, predictedStock);
+                updateCharts(riskScores);
+                updateInsights(dashboard, riskScores);
+                checkAlerts(riskScores);
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        function updateTable(suppliers, riskScores, predictedStock) {
+            const tbody = document.getElementById('supplierTable');
+            tbody.innerHTML = '';
+
+            suppliers.suppliers.forEach(supplier => {
+                const risk = riskScores.risk_scores.find(r => r.supplier_id === supplier.id);
+                const stock = predictedStock.predicted_stock.find(s => s.supplier_id === supplier.id);
+                
+                if (risk && stock) {
+                    const riskClass = risk.risk_score > 70 ? 'bg-red-900' : 
+                                     risk.risk_score > 40 ? 'bg-yellow-900' : 'bg-green-900';
+                    
+                    const row = `
+                        <tr class="${riskClass} hover:bg-opacity-50 transition">
+                            <td class="p-3 font-semibold">${supplier.name}</td>
+                            <td class="p-3">Tier ${supplier.tier}</td>
+                            <td class="p-3">${stock.reported_stock.toLocaleString()}</td>
+                            <td class="p-3">${stock.predicted_stock.toLocaleString()}</td>
+                            <td class="p-3">${stock.deviation.toLocaleString()}</td>
+                            <td class="p-3 font-bold">${Math.abs(stock.deviation_percentage).toFixed(1)}%</td>
+                            <td class="p-3">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold ${
+                                    risk.risk_level === 'CRITICAL' ? 'bg-red-600' :
+                                    risk.risk_level === 'WARNING' ? 'bg-yellow-600' : 'bg-green-600'
+                                }">
+                                    ${risk.risk_level}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                }
+            });
+        }
+
+        function updateCharts(riskScores) {
+            const labels = riskScores.risk_scores.map(r => r.supplier_name.split(' ')[0]);
+            const data = riskScores.risk_scores.map(r => r.risk_score);
+            
+            riskChart.data.labels = labels;
+            riskChart.data.datasets[0].data = data;
+            riskChart.data.datasets[0].backgroundColor = data.map(d => 
+                d > 70 ? 'rgba(239, 68, 68, 0.8)' : 
+                d > 40 ? 'rgba(245, 158, 11, 0.8)' : 'rgba(16, 185, 129, 0.8)'
+            );
+            riskChart.update();
+
+            const tier1 = riskScores.risk_scores.filter(r => r.tier === 1);
+            const tier2 = riskScores.risk_scores.filter(r => r.tier === 2);
+            const tier3 = riskScores.risk_scores.filter(r => r.tier === 3);
+            
+            const avg1 = tier1.reduce((sum, r) => sum + r.risk_score, 0) / tier1.length;
+            const avg2 = tier2.reduce((sum, r) => sum + r.risk_score, 0) / tier2.length;
+            const avg3 = tier3.reduce((sum, r) => sum + r.risk_score, 0) / tier3.length;
+            
+            heatmapChart.data.datasets[0].data = [avg1, avg2, avg3];
+            heatmapChart.update();
+        }
+
+        function updateInsights(dashboard, riskScores) {
+            const insights = document.getElementById('aiInsights');
+            const critical = riskScores.summary.critical;
+            const warning = riskScores.summary.warning;
+            
+            insights.innerHTML = `
+                <p>✅ <strong>Analysis Complete:</strong> Processed ${riskScores.total} suppliers across 3 tiers</p>
+                <p>⚠️ <strong>Risk Assessment:</strong> ${critical} critical risks, ${warning} warnings detected</p>
+                <p>🎯 <strong>Recommendation:</strong> ${critical > 0 ? 'Immediate action required for critical suppliers' : 'System operating normally'}</p>
+                <p>📊 <strong>Phantom Stock:</strong> ${dashboard.summary.phantom_stock_detected} instances detected</p>
+            `;
+        }
+
+        function checkAlerts(riskScores) {
+            const critical = riskScores.risk_scores.filter(r => r.risk_score > 50);
+            const alertsContainer = document.getElementById('alertsContainer');
+            const alertMessage = document.getElementById('alertMessage');
+            
+            if (critical.length > 0) {
+                alertsContainer.classList.remove('hidden');
+                alertMessage.innerHTML = `
+                    <p><strong>Risk Agent</strong> detected ${critical.length} high-risk supplier(s):</p>
+                    <ul class="list-disc ml-6 mt-2">
+                        ${critical.map(c => `<li>${c.supplier_name}: ${c.risk_score.toFixed(1)}% risk</li>`).join('')}
+                    </ul>
+                `;
+            } else {
+                alertsContainer.classList.add('hidden');
+            }
+        }
+
+        function simulateBreakdown() {
+            alert('🔧 Simulating supplier breakdown...');
+            runAnalysis();
+        }
+
+        function simulateDelay() {
+            alert('⏱️ Simulating delivery delay...');
+            runAnalysis();
+        }
+
+        function resetData() {
+            alert('🔄 Resetting simulation data...');
+            location.reload();
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        initCharts();
+        runAnalysis();
+    </script>
+</body>
+</html>

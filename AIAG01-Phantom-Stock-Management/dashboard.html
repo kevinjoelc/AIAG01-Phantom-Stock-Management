@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIAG01 - Phantom Stock Management Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; }
+        .container { max-width: 1400px; margin: 20px auto; padding: 0 20px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .stat-card h3 { color: #666; font-size: 14px; margin-bottom: 10px; }
+        .stat-card .value { font-size: 32px; font-weight: bold; color: #333; }
+        .stat-card.critical .value { color: #e74c3c; }
+        .stat-card.warning .value { color: #f39c12; }
+        .stat-card.normal .value { color: #27ae60; }
+        .section { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .section h2 { margin-bottom: 15px; color: #333; }
+        .alert { padding: 15px; margin-bottom: 10px; border-radius: 5px; border-left: 4px solid; }
+        .alert.critical { background: #fee; border-color: #e74c3c; }
+        .alert.warning { background: #fef5e7; border-color: #f39c12; }
+        .alert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .alert-severity { font-weight: bold; font-size: 12px; }
+        .alert-message { color: #333; }
+        .supplier-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .supplier-card { padding: 15px; border-radius: 5px; border: 1px solid #ddd; }
+        .supplier-card.tier1 { background: #e8f5e9; }
+        .supplier-card.tier2 { background: #fff3e0; }
+        .supplier-card.tier3 { background: #ffebee; }
+        .btn { background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn:hover { background: #5568d3; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .agent-reasoning { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 10px; white-space: pre-wrap; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏭 AIAG01 - Phantom Stock Management</h1>
+        <p>Agentic AI-Enabled Multi-Tier Supply Chain Monitoring</p>
+    </div>
+
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button class="btn" onclick="runAnalysis()">🔄 Run Analysis</button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <h3>🤖 Agents are analyzing supply chain data...</h3>
+            <p>Supply Monitoring → Validation → Risk Analysis → Supervisor</p>
+        </div>
+
+        <div id="dashboard" style="display: none;">
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>Total Suppliers</h3>
+                    <div class="value" id="totalSuppliers">-</div>
+                </div>
+                <div class="stat-card critical">
+                    <h3>Phantom Stock Detected</h3>
+                    <div class="value" id="phantomStock">-</div>
+                </div>
+                <div class="stat-card warning">
+                    <h3>Warnings</h3>
+                    <div class="value" id="warnings">-</div>
+                </div>
+                <div class="stat-card normal">
+                    <h3>System Status</h3>
+                    <div class="value" id="status" style="font-size: 20px;">-</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🚨 Active Alerts</h2>
+                <div id="alerts"></div>
+            </div>
+
+            <div class="section">
+                <h2>📊 Critical Risks</h2>
+                <div id="risks"></div>
+            </div>
+
+            <div class="section">
+                <h2>🏢 Supplier Overview</h2>
+                <div class="supplier-list" id="suppliers"></div>
+            </div>
+
+            <div class="section">
+                <h2>🤖 Agent Reasoning (Transparency)</h2>
+                <div id="agentReasoning"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        async function runAnalysis() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+
+            try {
+                // Run analysis
+                const analysisRes = await fetch(`${API_BASE}/analysis/run`, { method: 'POST' });
+                const analysisData = await analysisRes.json();
+
+                // Get dashboard data
+                const dashboardRes = await fetch(`${API_BASE}/dashboard`);
+                const dashboardData = await dashboardRes.json();
+
+                // Get agent reasoning
+                const reasoningRes = await fetch(`${API_BASE}/agents/reasoning`);
+                const reasoningData = await reasoningRes.json();
+
+                displayDashboard(dashboardData, analysisData, reasoningData);
+            } catch (error) {
+                alert('Error: Make sure the backend is running at http://localhost:5000');
+                console.error(error);
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+        }
+
+        function displayDashboard(dashboard, analysis, reasoning) {
+            // Update stats
+            document.getElementById('totalSuppliers').textContent = dashboard.suppliers.length;
+            document.getElementById('phantomStock').textContent = dashboard.summary.summary.phantom_stock_detected;
+            document.getElementById('warnings').textContent = dashboard.summary.summary.risks_identified;
+            document.getElementById('status').textContent = dashboard.summary.summary.status;
+
+            // Display alerts
+            const alertsHtml = dashboard.alerts.map(alert => `
+                <div class="alert ${alert.severity.toLowerCase()}">
+                    <div class="alert-header">
+                        <span class="alert-severity">${alert.severity}</span>
+                        <span>${alert.timestamp}</span>
+                    </div>
+                    <div class="alert-message">${alert.message}</div>
+                    ${alert.deviation ? `<div style="margin-top: 5px; font-size: 12px;">Deviation: ${alert.deviation} | Risk Score: ${alert.risk_score}</div>` : ''}
+                </div>
+            `).join('');
+            document.getElementById('alerts').innerHTML = alertsHtml || '<p>No alerts</p>';
+
+            // Display critical risks
+            const risksHtml = dashboard.critical_risks.map(risk => `
+                <div class="alert critical">
+                    <strong>${risk.supplier_name}</strong> (Tier ${risk.tier})<br>
+                    Risk Score: ${risk.risk_score} | Deviation: ${risk.deviation_percentage}%<br>
+                    Reported: ${risk.reported_stock} | Expected: ${risk.expected_stock}
+                </div>
+            `).join('');
+            document.getElementById('risks').innerHTML = risksHtml || '<p>No critical risks</p>';
+
+            // Display suppliers
+            const suppliersHtml = dashboard.suppliers.map(supplier => `
+                <div class="supplier-card tier${supplier.tier}">
+                    <strong>${supplier.name}</strong><br>
+                    <small>ID: ${supplier.id} | Tier ${supplier.tier}</small><br>
+                    Capacity: ${supplier.capacity} | Reliability: ${(supplier.reliability * 100).toFixed(0)}%
+                </div>
+            `).join('');
+            document.getElementById('suppliers').innerHTML = suppliersHtml;
+
+            // Display agent reasoning
+            const reasoningHtml = Object.entries(reasoning.agents).map(([key, agent]) => `
+                <h4>${agent.name}</h4>
+                <div class="agent-reasoning">${agent.reasoning}</div>
+            `).join('');
+            document.getElementById('agentReasoning').innerHTML = reasoningHtml;
+        }
+
+        // Auto-run on load
+        window.onload = () => {
+            setTimeout(runAnalysis, 500);
+        };
+    </script>
+</body>
+</html>

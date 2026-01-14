@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: aiag01-backend
+    env: python
+    buildCommand: pip install -r agentic_system/requirements.txt
+    startCommand: cd agentic_system && uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health

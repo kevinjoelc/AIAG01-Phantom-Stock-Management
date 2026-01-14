@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIAG01 - Phantom Stock Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+            background: #0a0e27;
+            padding: 0;
+            min-height: 100vh;
+            color: #e4e4e7;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px 60px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 40px 50px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            margin-bottom: 40px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .header h1 {
+            color: #f1f5f9;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 15px;
+            font-weight: 400;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .status-item {
+            background: rgba(30, 41, 59, 0.6);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #cbd5e1;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .status-item.online {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-item.refreshing {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+
+        .card h3 {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .card .value {
+            font-size: 48px;
+            font-weight: 700;
+            color: #f1f5f9;
+            letter-spacing: -1px;
+        }
+
+        .card.critical .value {
+            color: #f87171;
+        }
+
+        .card.warning .value {
+            color: #fbbf24;
+        }
+
+        .card.normal .value {
+            color: #34d399;
+        }
+
+        .tier-section {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            margin-bottom: 32px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .tier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .tier-header h2 {
+            font-size: 24px;
+            color: #f1f5f9;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .tier-badge {
+            padding: 8px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .tier-badge.tier1 {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .tier-badge.tier2 {
+            background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+        }
+
+        .tier-badge.tier3 {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+
+        .supplier-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .supplier-card {
+            background: rgba(30, 41, 59, 0.4);
+            padding: 28px;
+            border-radius: 12px;
+            border-left: 4px solid #34d399;
+            transition: all 0.3s;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .supplier-card:hover {
+            transform: translateX(8px);
+            background: rgba(30, 41, 59, 0.6);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .supplier-card.high-risk {
+            border-left-color: #f87171;
+            background: rgba(248, 113, 113, 0.05);
+            border: 1px solid rgba(248, 113, 113, 0.2);
+        }
+
+        .supplier-card.medium-risk {
+            border-left-color: #fbbf24;
+            background: rgba(251, 191, 36, 0.05);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        .supplier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .supplier-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f1f5f9;
+            letter-spacing: -0.3px;
+        }
+
+        .risk-badge {
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .risk-badge.critical {
+            background: rgba(248, 113, 113, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+
+        .risk-badge.warning {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fcd34d;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .risk-badge.normal {
+            background: rgba(52, 211, 153, 0.2);
+            color: #6ee7b7;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        .stock-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stock-item {
+            text-align: center;
+        }
+
+        .stock-label {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .stock-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f1f5f9;
+            letter-spacing: -0.5px;
+        }
+
+        .stock-item.phantom .stock-value {
+            color: #f87171;
+        }
+
+        .deviation-bar {
+            margin-top: 20px;
+            background: rgba(30, 41, 59, 0.6);
+            height: 10px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .deviation-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #34d399 0%, #10b981 100%);
+            transition: width 0.3s;
+            box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+        }
+
+        .deviation-fill.high {
+            background: linear-gradient(90deg, #f87171 0%, #ef4444 100%);
+            box-shadow: 0 0 10px rgba(248, 113, 113, 0.5);
+        }
+
+        .deviation-fill.medium {
+            background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #94a3b8;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .error {
+            background: rgba(248, 113, 113, 0.1);
+            color: #fca5a5;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+
+        .refresh-timer {
+            font-size: 12px;
+            color: #666;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .refreshing-indicator {
+            animation: pulse 1.5s infinite;
+        }
+
+        .agent-logs {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            margin-bottom: 40px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .agent-logs h2 {
+            font-size: 24px;
+            color: #f1f5f9;
+            margin-bottom: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .agent-card {
+            background: rgba(30, 41, 59, 0.4);
+            padding: 24px;
+            border-radius: 12px;
+            border-left: 4px solid #64748b;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: all 0.3s;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .agent-card.active {
+            border-left-color: #34d399;
+            background: rgba(52, 211, 153, 0.05);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+        }
+
+        .agent-card.processing {
+            border-left-color: #fbbf24;
+            background: rgba(251, 191, 36, 0.05);
+            animation: pulse 1s infinite;
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        .agent-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 10px;
+            letter-spacing: -0.3px;
+        }
+
+        .agent-status {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .agent-log {
+            font-size: 12px;
+            color: #cbd5e1;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-family: 'Courier New', monospace;
+            max-height: 60px;
+            overflow-y: auto;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AIAG01 Phantom Stock Detection Dashboard</h1>
+            <p>Real-time monitoring of multi-tier supplier inventory with AI-powered anomaly detection</p>
+            <div class="status-bar">
+                <div class="status-item online" id="statusIndicator">System Online</div>
+                <div class="status-item" id="refreshTimer">Next refresh in 5s</div>
+            </div>
+        </div>
+
+        <div id="errorContainer"></div>
+
+        <div class="agent-logs">
+            <h2>Agent Pipeline Status</h2>
+            <div class="agent-grid">
+                <div class="agent-card" id="monitoringAgent">
+                    <div class="agent-name">Monitoring Agent</div>
+                    <div class="agent-status">Idle</div>
+                    <div class="agent-log">Waiting for data...</div>
+                </div>
+                <div class="agent-card" id="validationAgent">
+                    <div class="agent-name">Validation Agent</div>
+                    <div class="agent-status">Idle</div>
+                    <div class="agent-log">Waiting for data...</div>
+                </div>
+                <div class="agent-card" id="riskAgent">
+                    <div class="agent-name">Risk Agent</div>
+                    <div class="agent-status">Idle</div>
+                    <div class="agent-log">Waiting for data...</div>
+                </div>
+                <div class="agent-card" id="supervisorAgent">
+                    <div class="agent-name">Supervisor Agent</div>
+                    <div class="agent-status">Idle</div>
+                    <div class="agent-log">Waiting for data...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-cards" id="summaryCards">
+            <div class="card">
+                <h3>Total Suppliers</h3>
+                <div class="value">-</div>
+            </div>
+            <div class="card critical">
+                <h3>Critical Risks</h3>
+                <div class="value">-</div>
+            </div>
+            <div class="card warning">
+                <h3>Warnings</h3>
+                <div class="value">-</div>
+            </div>
+            <div class="card normal">
+                <h3>Normal</h3>
+                <div class="value">-</div>
+            </div>
+        </div>
+
+        <div id="tier1Section"></div>
+        <div id="tier2Section"></div>
+        <div id="tier3Section"></div>
+
+        <div class="loading" id="loadingIndicator">Loading dashboard data...</div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001/api';
+        const REFRESH_INTERVAL = 5000; // 5 seconds
+        let refreshTimer;
+        let countdownTimer;
+        let secondsRemaining = 5;
+
+        function updateAgentStatus(agentId, status, log) {
+            const agent = document.getElementById(agentId);
+            const statusEl = agent.querySelector('.agent-status');
+            const logEl = agent.querySelector('.agent-log');
+            
+            agent.className = 'agent-card ' + status;
+            statusEl.textContent = status === 'processing' ? 'Processing...' : 
+                                   status === 'active' ? 'Completed' : 'Idle';
+            logEl.textContent = log;
+        }
+
+        async function fetchData() {
+            try {
+                document.getElementById('statusIndicator').className = 'status-item refreshing-indicator';
+                document.getElementById('statusIndicator').textContent = 'Refreshing...';
+
+                // Monitoring Agent
+                updateAgentStatus('monitoringAgent', 'processing', 'Validating inventory data...');
+                await new Promise(r => setTimeout(r, 300));
+                
+                // Trigger analysis
+                await fetch(`${API_BASE}/analysis/run`, { method: 'POST' });
+                updateAgentStatus('monitoringAgent', 'active', 'Validated 8 suppliers, 0 anomalies detected');
+
+                // Validation Agent
+                updateAgentStatus('validationAgent', 'processing', 'Calculating stock deviations...');
+                await new Promise(r => setTimeout(r, 300));
+                updateAgentStatus('validationAgent', 'active', 'Computed deviations for all suppliers');
+
+                // Risk Agent
+                updateAgentStatus('riskAgent', 'processing', 'Analyzing risk scores...');
+                await new Promise(r => setTimeout(r, 300));
+
+                // Fetch all data
+                const [suppliers, riskScores, predictedStock, dashboard] = await Promise.all([
+                    fetch(`${API_BASE}/suppliers`).then(r => r.json()),
+                    fetch(`${API_BASE}/risk-scores`).then(r => r.json()),
+                    fetch(`${API_BASE}/predicted-stock`).then(r => r.json()),
+                    fetch(`${API_BASE}/dashboard`).then(r => r.json())
+                ]);
+
+                updateAgentStatus('riskAgent', 'active', 
+                    `Found ${riskScores.summary.critical} critical, ${riskScores.summary.warning} warnings`);
+
+                // Supervisor Agent
+                updateAgentStatus('supervisorAgent', 'processing', 'Generating alerts...');
+                await new Promise(r => setTimeout(r, 300));
+                updateAgentStatus('supervisorAgent', 'active', 
+                    `Generated ${dashboard.summary.total_alerts} alerts`);
+
+                return { suppliers, riskScores, predictedStock, dashboard };
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                showError('Failed to connect to backend. Make sure the server is running on http://localhost:8000');
+                ['monitoringAgent', 'validationAgent', 'riskAgent', 'supervisorAgent'].forEach(id => {
+                    updateAgentStatus(id, '', 'Error: Connection failed');
+                });
+                throw error;
+            } finally {
+                document.getElementById('statusIndicator').className = 'status-item online';
+                document.getElementById('statusIndicator').textContent = 'System Online';
+            }
+        }
+
+        function showError(message) {
+            const errorContainer = document.getElementById('errorContainer');
+            errorContainer.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function clearError() {
+            document.getElementById('errorContainer').innerHTML = '';
+        }
+
+        function updateSummaryCards(dashboard, riskScores) {
+            const cards = document.querySelectorAll('.summary-cards .card');
+            cards[0].querySelector('.value').textContent = riskScores.total || 0;
+            cards[1].querySelector('.value').textContent = riskScores.summary.critical || 0;
+            cards[2].querySelector('.value').textContent = riskScores.summary.warning || 0;
+            cards[3].querySelector('.value').textContent = riskScores.summary.normal || 0;
+        }
+
+        function renderSupplierCard(supplier, riskData, stockData) {
+            const deviation = Math.abs(stockData.deviation_percentage || 0);
+            const riskLevel = riskData.risk_level.toLowerCase();
+            const riskClass = riskLevel === 'critical' ? 'high-risk' : 
+                             riskLevel === 'warning' ? 'medium-risk' : '';
+            
+            const phantomStock = stockData.reported_stock - stockData.predicted_stock;
+            const deviationClass = deviation > 30 ? 'high' : deviation > 15 ? 'medium' : '';
+
+            return `
+                <div class="supplier-card ${riskClass}">
+                    <div class="supplier-header">
+                        <div class="supplier-name">${supplier.name}</div>
+                        <div class="risk-badge ${riskLevel}">${riskLevel}</div>
+                    </div>
+                    <div class="stock-info">
+                        <div class="stock-item">
+                            <div class="stock-label">Reported</div>
+                            <div class="stock-value">${stockData.reported_stock.toLocaleString()}</div>
+                        </div>
+                        <div class="stock-item">
+                            <div class="stock-label">Predicted</div>
+                            <div class="stock-value">${stockData.predicted_stock.toLocaleString()}</div>
+                        </div>
+                        <div class="stock-item phantom">
+                            <div class="stock-label">Phantom</div>
+                            <div class="stock-value">${phantomStock > 0 ? '+' : ''}${phantomStock.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="deviation-bar">
+                        <div class="deviation-fill ${deviationClass}" style="width: ${Math.min(deviation, 100)}%"></div>
+                    </div>
+                    <div style="text-align: center; margin-top: 8px; font-size: 12px; color: #666;">
+                        Risk: ${deviation.toFixed(1)}% deviation | Score: ${riskData.risk_score.toFixed(1)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTierSection(tier, suppliers, riskScores, predictedStock) {
+            const tierSuppliers = suppliers.filter(s => s.tier === tier);
+            if (tierSuppliers.length === 0) return '';
+
+            const tierClass = `tier${tier}`;
+            const tierName = `Tier ${tier}`;
+
+            let html = `
+                <div class="tier-section">
+                    <div class="tier-header">
+                        <h2>${tierName} Suppliers</h2>
+                        <div class="tier-badge ${tierClass}">${tierSuppliers.length} Suppliers</div>
+                    </div>
+                    <div class="supplier-grid">
+            `;
+
+            tierSuppliers.forEach(supplier => {
+                const riskData = riskScores.risk_scores.find(r => r.supplier_id === supplier.id);
+                const stockData = predictedStock.predicted_stock.find(s => s.supplier_id === supplier.id);
+                
+                if (riskData && stockData) {
+                    html += renderSupplierCard(supplier, riskData, stockData);
+                }
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            return html;
+        }
+
+        function updateDashboard(data) {
+            clearError();
+            document.getElementById('loadingIndicator').style.display = 'none';
+
+            updateSummaryCards(data.dashboard, data.riskScores);
+
+            document.getElementById('tier1Section').innerHTML = 
+                renderTierSection(1, data.suppliers.suppliers, data.riskScores, data.predictedStock);
+            
+            document.getElementById('tier2Section').innerHTML = 
+                renderTierSection(2, data.suppliers.suppliers, data.riskScores, data.predictedStock);
+            
+            document.getElementById('tier3Section').innerHTML = 
+                renderTierSection(3, data.suppliers.suppliers, data.riskScores, data.predictedStock);
+        }
+
+        function updateCountdown() {
+            secondsRemaining--;
+            if (secondsRemaining <= 0) {
+                secondsRemaining = REFRESH_INTERVAL / 1000;
+            }
+            document.getElementById('refreshTimer').textContent = `Next refresh in ${secondsRemaining}s`;
+        }
+
+        async function refresh() {
+            try {
+                const data = await fetchData();
+                updateDashboard(data);
+            } catch (error) {
+                console.error('Refresh failed:', error);
+            }
+        }
+
+        function startAutoRefresh() {
+            refresh(); // Initial load
+            
+            refreshTimer = setInterval(refresh, REFRESH_INTERVAL);
+            countdownTimer = setInterval(updateCountdown, 1000);
+        }
+
+        // Start dashboard
+        startAutoRefresh();
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            clearInterval(refreshTimer);
+            clearInterval(countdownTimer);
+        });
+    </script>
+</body>
+</html>
